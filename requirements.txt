@@ -1,0 +1,7 @@
+numpy
+serial
+scipy
+logging
+importlib
+dotenv
+flask
