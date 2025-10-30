@@ -31,7 +31,7 @@ PRINT_TO_TERMINAL = True
 PRINT_MODE = 'stats'  # 'stats' | 'matrix'
 # Print every N frames
 PRINT_EVERY_N = 10
-
+# balabala
 # Force/pressure calibration and output
 # Linear force model per taxel: force_N = max(0, FORCE_GAIN * counts + FORCE_BIAS)
 FORCE_GAIN = float(os.getenv('AMAL_FORCE_GAIN', '0.02'))  # N per sensor count

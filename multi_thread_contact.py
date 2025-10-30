@@ -7,7 +7,7 @@ from scipy.ndimage import gaussian_filter
 # import matplotlib.pyplot as plt
 # import seaborn as sns
 # os.system('cls')
-
+#balabala
 contact_data_norm = np.zeros((16,16))
 WINDOW_WIDTH = contact_data_norm.shape[1]*30
 WINDOW_HEIGHT = contact_data_norm.shape[0]*30
