@@ -7,23 +7,28 @@ from scipy.ndimage import gaussian_filter
 # import matplotlib.pyplot as plt
 # import seaborn as sns
 # os.system('cls')
-#balabala
-contact_data_norm = np.zeros((16,16))
-WINDOW_WIDTH = contact_data_norm.shape[1]*30
-WINDOW_HEIGHT = contact_data_norm.shape[0]*30
-cv2.namedWindow("Contact Data_left", cv2.WINDOW_NORMAL)
-cv2.resizeWindow("Contact Data_left",WINDOW_WIDTH, WINDOW_HEIGHT)
-THRESHOLD =12
-NOISE_SCALE =60
+
+#contact_data_norm = np.zeros((16,16))
+#WINDOW_WIDTH = contact_data_norm.shape[1]*30
+#WINDOW_HEIGHT = contact_data_norm.shape[0]*30
+#cv2.namedWindow("Contact Data_left", cv2.WINDOW_NORMAL)
+#cv2.resizeWindow("Contact Data_left",WINDOW_WIDTH, WINDOW_HEIGHT)
+#THRESHOLD =12
+#NOISE_SCALE =60
+
+contact_data = np.zeros((16,16))
+flag = False
 
 def readThread(serDev):
-    global contact_data_norm,flag
+    global contact_data, flag
     data_tac = []
     num = 0
     t1=0
     backup = None
     flag=False
     current = None
+    frame_counter = 0
+    last_print_time = 0.0
     while True:
         if serDev.in_waiting > 0:
             try:
@@ -64,17 +69,21 @@ def readThread(serDev):
             if len(line) < 10:
                 if current is not None and len(current) == 16:
                     backup = np.array(current)
-                    # print(backup)
+                    frame_counter += 1
                 current = []
                 if backup is not None:
-                    contact_data= backup-median-THRESHOLD
-                    contact_data = np.clip(contact_data, 0, 100)
+                    contact_data[:] = backup-median
                     
-                    if np.max(contact_data) < THRESHOLD:
-                        contact_data_norm = contact_data /NOISE_SCALE
-                    else:
-                        # contact_data_norm = np.log(contact_data + 1) / np.log(2.0)
-                        contact_data_norm = contact_data / np.max(contact_data)
+                    # Print contact_data every 2 seconds
+                    now = time.time()
+                    if now - last_print_time >= 2.0:
+                        print("\n" + "="*70)
+                        print(f"Frame #{frame_counter} — Contact Data (median-subtracted)")
+                        print("="*70)
+                        for row in contact_data:
+                            print(" ".join(f"{val:6.1f}" for val in row))
+                        print("="*70 + "\n")
+                        last_print_time = now
 
                 continue
             if current is not None:
@@ -98,37 +107,38 @@ serialThread.daemon = True
 serialThread.start()
 
 
-def apply_gaussian_blur(contact_map, sigma=0.1):
-    return gaussian_filter(contact_map, sigma=sigma)
+#def apply_gaussian_blur(contact_map, sigma=0.1):
+#    return gaussian_filter(contact_map, sigma=sigma)
 
-def temporal_filter(new_frame, prev_frame, alpha=0.2):
-    """
-    Apply temporal smoothing filter.
-    'alpha' determines the blending factor.
-    A higher alpha gives more weight to the current frame, while a lower alpha gives more weight to the previous frame.
-    """
-    return alpha * new_frame + (1 - alpha) * prev_frame
+#def temporal_filter(new_frame, prev_frame, alpha=0.2):
+#    """
+#    Apply temporal smoothing filter.
+#    'alpha' determines the blending factor.
+#    A higher alpha gives more weight to the current frame, while a lower alpha gives more weight to the previous frame.
+#    """
+#    return alpha * new_frame + (1 - alpha) * prev_frame
 
 # Initialize previous frame buffer
-prev_frame = np.zeros_like(contact_data_norm)
+#prev_frame = np.zeros_like(contact_data_norm)
 
 if __name__ == '__main__':
 
     print('receive data test')
 
     while True:
+        time.sleep(0.1)  # Small sleep to prevent busy loop
 
-        for i in range(300):
-            if flag:
-                temp_filtered_data = temporal_filter(contact_data_norm, prev_frame)
-                prev_frame = temp_filtered_data
+        #for i in range(300):
+        #    if flag:
+        #        temp_filtered_data = temporal_filter(contact_data_norm, prev_frame)
+        #        prev_frame = temp_filtered_data
 
-                # Scale to 0-255 and convert to uint8
-                temp_filtered_data_scaled = (temp_filtered_data * 255).astype(np.uint8)
+        #        # Scale to 0-255 and convert to uint8
+        #        temp_filtered_data_scaled = (temp_filtered_data * 255).astype(np.uint8)
 
-                # Apply color map
-                colormap = cv2.applyColorMap(temp_filtered_data_scaled, cv2.COLORMAP_VIRIDIS)
+        #        # Apply color map
+        #        colormap = cv2.applyColorMap(temp_filtered_data_scaled, cv2.COLORMAP_VIRIDIS)
 
-                cv2.imshow("Contact Data_left", colormap)
-                cv2.waitKey(1)
-            time.sleep(0.01)
+        #        cv2.imshow("Contact Data_left", colormap)
+        #        cv2.waitKey(1)
+        #    time.sleep(0.01)
